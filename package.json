@@ -2,15 +2,19 @@
   "name": "pixel-porter",
   "version": "0.0.1",
   "description": "process images exif info and generate a watermark",
-  "main": "index.js",
+  "type": "module",
+  "main": "main.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --experimental-strip-types main.ts"
   },
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.24"
+  },
   "dependencies": {
+    "dayjs": "^1.11.13",
     "exifr": "^7.1.3",
-    "jimp": "^1.6.0"
+    "file-type": "^21.0.0"
   }
 }

@@ -2,10 +2,22 @@
 
 像素搬运工
 
+node + typescript
+
+## 项目启动
+
+node --experimental-strip-types index.ts
+
+```bash
+pnpm install
+pnpm dev
+```
+
 ## 开发环境
 
-- node 20.11.0
-- pnpm 10.2.1
+- node 22.14.0
+- npm 10.9.1
+- pnpm 8.3.1
 
 ## 项目简介
 
