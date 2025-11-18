@@ -1,139 +1,134 @@
-# pixel-porter
+# Pixel Porter - 图片整理工具
 
-像素搬运工
+Pixel Porter 是一个功能强大的图片整理工具，它可以根据图片的EXIF信息或创建时间自动重命名图片文件，并按日期组织到输出目录中。
 
-node + typescript
+## 功能特性
 
-## 项目启动
+1. **智能重命名**：优先使用图片的EXIF拍摄时间，其次使用文件创建时间
+2. **保持原信息**：所有操作都不会修改图片的原始元数据
+3. **异常处理**：无法处理的文件（非图片或无法获取时间信息）会被移动到未处理目录
+4. **日期组织**：每次运行程序都会在输出目录创建一个日期文件夹
+5. **变更日志**：详细记录所有文件的处理情况
+6. **批量处理**：支持处理目录下的所有图片文件
 
-node --experimental-strip-types index.ts
+## 安装说明
+
+### 环境要求
+
+- Python 3.6 及以上
+- pip 包管理工具
+
+### 安装依赖
 
 ```bash
-pnpm install
-pnpm dev
+cd /Users/conrad/Desktop/workspace/toolkit/pixel-porter
+pip install -r requirements.txt
 ```
 
-## 开发环境
+## 使用方法
 
-- node 22.14.0
-- npm 10.9.1
-- pnpm 8.3.1
+### 基本用法
 
-## 项目简介
+```bash
+python main.py --input <输入目录> --output <输出目录>
+```
 
-1. 为图片添加EXIF信息的水印
-2. 为图片添加EXIF信息
-3. 通过EXIF信息为图片更改文件名
+或者使用短参数：
 
-## EXIF 信息
+```bash
+python main.py -i <输入目录> -o <输出目录>
+```
 
-EXIF（Exchangeable Image File Format）是嵌入在图像文件中的元数据，记录了拍摄时的各种参数和设备信息。
+### 示例
 
-1. 相机信息
+```bash
+python main.py --input ~/Downloads/photos --output ~/Pictures/organized
+```
 
-| 字段名    | 含义                   | 示例值          |
-| :-------- | ---------------------- | --------------- |
-| Make      | 相机制造商             | Canon           |
-| Model     | 相机型号               | EOS R5          |
-| Software  | 相机固件或后期处理软件 | Adobe Photoshop |
-| Artist    | 摄影师或作者信息       | John Doe        |
-| Copyright | 版权信息               | © 2023 John Doe |
+### 使用配置文件（推荐）
 
-2. 拍摄参数
+程序支持通过配置文件设置默认的输入输出目录，这样就不需要每次运行都指定参数。
 
-| 字段名                | 含义                   | 示例值               |
-| :-------------------- | ---------------------- | -------------------- |
-| FNumber               | 光圈值（f/值）         | 2.8                  |
-| ExposureTime          | 曝光时间（秒）         | 1/250                |
-| ISO                   | ISO 感光度             | 400                  |
-| FocalLength           | 焦距（毫米）           | 50                   |
-| FocalLengthIn35mmFilm | 等效 35mm 焦距         | 75                   |
-| ExposureMode          | 曝光模式（手动/自动）  | Manual               |
-| ExposureProgram       | 曝光程序（如光圈优先） | Aperture Priority    |
-| MeteringMode          | 测光模式（如点测光）   | Spot                 |
-| Flash                 | 闪光灯状态             | Fired, Return detect |
-| WhiteBalance          | 白平衡模式             | Auto                 |
-| LightSource           | 光源类型               | Daylight             |
+- 编辑 `config.ini` 文件：
 
-3. 镜头信息
+  ```ini
+  [DEFAULT]
+  # 默认输入目录（可以是绝对路径或相对路径）
+  input = ./input
+  
+  # 默认输出目录（可以是绝对路径或相对路径）
+  output = ./output
+  ```
 
-| 字段名           | 含义       | 示例值           |
-| :--------------- | ---------- | ---------------- |
-| LensMake         | 镜头制造商 | Canon            |
-| LensModel        | 镜头型号   | EF 24-70mm f/2.8 |
-| LensSerialNumber | 镜头序列号 | 123456789        |
-| MaxApertureValue | 最大光圈值 | 2.8              |
+- 配置完成后，直接运行程序即可：
 
-4. 日期和时间
+  ```bash
+  python main.py
+  ```
 
-| 字段名            | 含义               | 示例值              |
-| :---------------- | ------------------ | ------------------- |
-| DateTimeOriginal  | 拍摄日期和时间     | 2023:10:01 12:34:56 |
-| DateTimeDigitized | 数字化日期和时间   | 2023:10:01 12:34:56 |
-| DateTime          | 文件修改日期和时间 | 2023:10:01 12:34:56 |
+- 如果同时指定命令行参数和配置文件，命令行参数会优先使用：
 
-5. GPS 信息
+  ```bash
+  python main.py -i /custom/input/path  # 使用自定义输入目录，输出目录使用配置文件中的默认值
+  ```
 
-| 字段名          | 含义                 | 示例值     |
-| :-------------- | -------------------- | ---------- |
-| GPSLatitude     | 纬度                 | 34.0522    |
-| GPSLongitude    | 经度                 | -118.2437  |
-| GPSAltitude     | 海拔高度             | 100        |
-| GPSSpeed        | 拍摄时的速度（km/h） | 60         |
-| GPSImgDirection | 拍摄时的方向（度）   | 90         |
-| GPSDateStamp    | GPS 日期             | 2023:10:01 |
-| GPSTimeStamp    | GPS 时间             | 12:34:56   |
+## 输出结构
 
-6. 图像属性
+程序运行后，输出目录的结构如下：
 
-| 字段名         | 含义                 | 示例值              |
-| :------------- | -------------------- | ------------------- |
-| ImageWidth     | 图像宽度（像素）     | 6000                |
-| ImageHeight    | 图像高度（像素）     | 4000                |
-| Orientation    | 图像方向（旋转角度） | Horizontal (normal) |
-| ResolutionUnit | 分辨率单位           | inches              |
-| XResolution    | 水平分辨率（DPI）    | 300                 |
-| YResolution    | 垂直分辨率（DPI）    | 300                 |
-| ColorSpace     | 色彩空间             | sRGB                |
-| BitsPerSample  | 每个颜色通道的位数   | 8                   |
-| Compression    | 压缩方式             | JPEG                |
+```
+输出目录/
+├── 20230615/          # 运行日期目录
+│   ├── 20230610_103025_0001.jpg
+│   ├── 20230610_103145_0002.jpg
+│   └── ...
+└── untreated/         # 未处理目录
+    ├── unknown_file.pdf
+    ├── corrupted_image.jpg
+    └── ...
+```
 
-7. 其他信息
+## 命名规则
 
-| 字段名               | 含义                 | 示例值                |
-| :------------------- | -------------------- | --------------------- |
-| SceneType            | 场景类型             | Directly photographed |
-| FileSource           | 文件来源             | Digital Camera        |
-| CustomRendered       | 自定义渲染（如 HDR） | Normal                |
-| Contrast             | 对比度设置           | Normal                |
-| Saturation           | 饱和度设置           | Normal                |
-| Sharpness            | 锐度设置             | Normal                |
-| SubjectDistanceRange | 拍摄距离范围         | Close                 |
+图片文件将按照以下格式命名：
 
-8. 高级参数
+```
+YYYYMMDD_HHMMSS_XXXX.ext
+```
 
-| 字段名             | 含义                    | 示例值              |
-| :----------------- | ----------------------- | ------------------- |
-| ExposureBiasValue  | 曝光补偿值（EV）        | 0                   |
-| BrightnessValue    | 亮度值                  | 5.5                 |
-| ShutterSpeedValue  | 快门速度值（APEX 单位） | 7.5                 |
-| ApertureValue      | 光圈值（APEX 单位）     | 3.5                 |
-| SubjectArea        | 主体区域（坐标或范围）  | 2000 1500 1000 1000 |
-| SubSecTimeOriginal | 拍摄时间的毫秒部分      | 123                 |
+其中：
+- `YYYYMMDD` 是年份、月份和日期
+- `HHMMSS` 是小时、分钟和秒
+- `XXXX` 是序号（从0001开始）
+- `ext` 是原始文件扩展名
 
-9. 特殊标记
+## 注意事项
 
-| 字段名                  | 含义                         | 示例值        |
-| :---------------------- | ---------------------------- | ------------- |
-| MakerNote               | 相机厂商自定义数据（二进制） | (Binary Data) |
-| UserComment             | 用户注释                     | 风景拍摄      |
-| InteroperabilityIndex   | 互操作性索引                 | R98           |
-| InteroperabilityVersion | 互操作性版本                 | 0100          |
+1. 程序会复制文件而不是移动文件，所以原始文件不会被修改
+2. 如果两个文件有相同的时间戳，会自动添加序号以避免文件名冲突
+3. 支持的图片格式：JPG, JPEG, PNG, GIF, BMP, TIFF, WebP
+4. 非图片文件或无法获取时间信息的图片会被移动到untreated目录
+5. 日志文件会保存在当前目录的 `pixel_porter.log` 中
 
-10. 视频相关（部分相机支持）
+## 常见问题
 
-| 字段名     | 含义         | 示例值   |
-| :--------- | ------------ | -------- |
-| Duration   | 视频时长     | 00:01:30 |
-| FrameRate  | 帧率         | 30 fps   |
-| VideoCodec | 视频编码格式 | H.264    |
+### 为什么有些图片被移动到未处理目录？
+
+可能的原因：
+- 文件不是支持的图片格式
+- 图片损坏，无法读取EXIF信息
+- 图片没有包含拍摄时间信息且无法获取文件创建时间
+
+### 程序运行速度慢怎么办？
+
+- 减少输入目录中的文件数量
+- 确保输入目录的结构不要太深
+- 关闭其他占用系统资源的程序
+
+## 许可证
+
+本项目采用 MIT 许可证。
+
+## 贡献
+
+欢迎提交 Issues 和 Pull Requests 来帮助改进这个工具！
