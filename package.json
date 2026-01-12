@@ -1,0 +1,73 @@
+{
+  "name": "pixel-porter",
+  "version": "1.0.0",
+  "description": "图片处理管理工具 - 批量重命名、水印添加、EXIF信息管理",
+  "main": "dist-electron/main/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json && node scripts/build-preload.js",
+    "preview": "vite preview",
+    "postinstall": "node scripts/fix-electron.js",
+    "build:main:dev": "tsc -p tsconfig.electron.json",
+    "build:preload:dev": "node scripts/build-preload.js",
+    "electron:dev": "pnpm run build:main:dev && pnpm run build:preload:dev && concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "pnpm run build:electron && pnpm run build && electron-builder",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "zustand": "^4.4.7",
+    "antd": "^5.12.0",
+    "@ant-design/icons": "^5.2.6",
+    "dayjs": "^1.11.10",
+    "exifr": "^7.1.3",
+    "sharp": "^0.33.0",
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "esbuild": "^0.19.8"
+  },
+  "build": {
+    "appId": "com.pixelporter.app",
+    "productName": "Pixel Porter",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.photography",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
+
