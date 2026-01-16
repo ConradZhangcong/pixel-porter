@@ -10,7 +10,6 @@
     "build": "tsc && vite build",
     "build:electron": "tsc -p tsconfig.electron.json && node scripts/build-preload.js",
     "preview": "vite preview",
-    "postinstall": "node scripts/fix-electron.js",
     "build:main:dev": "tsc -p tsconfig.electron.json",
     "build:preload:dev": "node scripts/build-preload.js",
     "electron:dev": "pnpm run build:main:dev && pnpm run build:preload:dev && concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && electron .\"",

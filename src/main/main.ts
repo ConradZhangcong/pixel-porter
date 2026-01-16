@@ -1,13 +1,17 @@
 import { app, BrowserWindow } from 'electron';
 import { createWindow } from './window';
-import { registerIpcHandlers } from './ipc';
+import { registerIpcHandlers, setMainWindow } from './ipc';
 
 // 处理应用窗口的激活（macOS）
 app.whenReady().then(() => {
+  // 创建窗口
+  const mainWindow = createWindow();
+  
+  // 设置主窗口引用
+  setMainWindow(mainWindow);
+  
   // 注册IPC处理器
   registerIpcHandlers();
-  
-  createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

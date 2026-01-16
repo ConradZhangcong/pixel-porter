@@ -57,3 +57,30 @@ export interface ProcessError {
   code?: string;
 }
 
+// 命名规则配置类型
+export interface NamingRuleConfig {
+  rule: NamingRule;
+  dateFormat?: string; // 日期格式，如 YYYYMMDD_HHMMSS
+  separator?: string; // 分隔符，如下划线、横线等
+  combinationTemplate?: string; // 组合规则模板，如 {date}_{time}_{original}
+  addPrefix?: string; // 添加前缀
+  addSuffix?: string; // 添加后缀
+  maxLength?: number; // 文件名最大长度
+  autoIndex?: boolean; // 自动添加序号处理冲突
+}
+
+// 重命名预览项
+export interface RenamePreviewItem {
+  fileInfo: FileInfo;
+  newName: string;
+  newPath: string;
+  hasConflict: boolean;
+  conflictReason?: string;
+}
+
+// 重命名选项
+export interface RenameOptions {
+  backup?: boolean;
+  backupDir?: string;
+}
+

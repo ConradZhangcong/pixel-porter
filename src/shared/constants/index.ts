@@ -19,6 +19,11 @@ export const SUPPORTED_IMAGE_FORMATS = [
 export const IPC_CHANNELS = {
   FILE_SELECT: 'file:select',
   FILE_SELECT_FOLDER: 'file:select-folder',
+  RENAME_SCAN_FOLDER: 'rename:scan-folder',
+  RENAME_GET_FILES_INFO: 'rename:get-files-info',
+  RENAME_GENERATE_PREVIEW: 'rename:generate-preview',
+  RENAME_EXECUTE: 'rename:execute',
+  RENAME_CANCEL: 'rename:cancel',
   CONFIG_GET: 'config:get',
   CONFIG_SET: 'config:set',
 } as const;

@@ -15,8 +15,11 @@ function HomePage() {
   const navigate = useNavigate();
 
   const handleFeatureClick = (feature: string) => {
-    // TODO: 导航到对应的功能页面
-    console.log(`Navigate to ${feature}`);
+    if (feature === 'rename') {
+      navigate('/rename');
+    } else {
+      console.log(`Navigate to ${feature}`);
+    }
   };
 
   return (
