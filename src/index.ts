@@ -1,7 +1,13 @@
 import { extname, join } from "node:path";
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import inquirer from "inquirer";
 
-import { scanDirectory, getFileInfo, copyFileTo, fileExists } from "./scripts/file.ts";
+import {
+  scanDirectory,
+  getFileInfo,
+  copyFileTo,
+  fileExists,
+} from "./scripts/file.ts";
 import { getConfig } from "./scripts/config.ts";
 
 /**
@@ -42,13 +48,17 @@ if (!(await fileExists(config.outputDir))) {
   await mkdir(config.outputDir, { recursive: true });
 }
 // 如果输出目录中存在文件, 则提示用户输入判断是否清空
-// const answer = await inquirer.prompt([
-//   {
-//     type: "confirm",
-//     name: "clear",
-//     message: "Output directory is not empty. Do you want to clear it?",
-//   },
-// ]);
+const answer = await inquirer.prompt([
+  {
+    type: "confirm",
+    name: "clear",
+    message: "Output directory is not empty. Do you want to clear it?",
+  },
+]);
+if (!answer.clear) {
+  console.log("User does not want to clear the output directory");
+  process.exit(0);
+}
 // 清空输出目录（如果存在）
 await clearDirectory(config.outputDir);
 
