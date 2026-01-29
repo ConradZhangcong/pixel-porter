@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import defaultConfig from "../config.ts";
+import defaultConfig from "../defaultConfig.ts";
 import { fileExists } from "./file.ts";
 import type { AppConfig } from "../types/App.ts";
 

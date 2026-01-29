@@ -1,45 +1,27 @@
 import { extname, join } from "node:path";
-import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import inquirer from "inquirer";
+import chalk from "chalk";
 
 import {
   scanDirectory,
   getFileInfo,
   copyFileTo,
   fileExists,
+  clearDirectory,
 } from "./scripts/file.ts";
 import { getConfig } from "./scripts/config.ts";
-
-/**
- * 清空目录内容
- * @param dirPath 目录路径
- */
-const clearDirectory = async (dirPath: string): Promise<void> => {
-  try {
-    const dirStat = await stat(dirPath);
-    if (dirStat.isDirectory()) {
-      const entries = await readdir(dirPath);
-      for (const entry of entries) {
-        const entryPath = join(dirPath, entry);
-        await rm(entryPath, { recursive: true, force: true });
-      }
-    }
-  } catch (error) {
-    // 目录不存在，忽略错误
-  }
-};
+import { formatDate } from "./scripts/time.ts";
+import { messages } from "./const/messages.ts";
 
 const config = await getConfig();
 // console.log("config: ", config);
-
-// 创建输出目录
-await mkdir(config.outputDir, { recursive: true });
 
 const files = await scanDirectory(config.inputDir, config.recursive);
 // console.log(files);
 
 if (!files || files.length === 0) {
-  console.log("No files to process");
+  console.log(chalk.red(messages.errors.noFiles));
   process.exit(0);
 }
 
@@ -52,15 +34,16 @@ const answer = await inquirer.prompt([
   {
     type: "confirm",
     name: "clear",
-    message: "Output directory is not empty. Do you want to clear it?",
+    message: chalk.blue(messages.prompts.clearOutput),
   },
 ]);
 if (!answer.clear) {
-  console.log("User does not want to clear the output directory");
+  console.log(chalk.yellow(messages.warnings.notClearOutput));
   process.exit(0);
 }
 // 清空输出目录（如果存在）
 await clearDirectory(config.outputDir);
+console.log(chalk.green(messages.info.clearSuccess));
 
 for (const file of files) {
   // 根据文件扩展名判断是否继续处理
@@ -70,10 +53,12 @@ for (const file of files) {
   }
   // 获取文件信息
   const fileInfo = await getFileInfo(file);
-  console.log(fileInfo);
+  // console.log(fileInfo);
   // 使用文件创建时间作为文件名
-  const fileName = fileInfo.createdAt.toISOString().replace(/[:.]/g, "-");
+  const fileName = formatDate(fileInfo.createdAt);
   const newFileName = `${fileName}.${ext}`;
   const newFilePath = join(config.outputDir, newFileName);
   await copyFileTo(file, newFilePath);
 }
+
+console.log(chalk.green(messages.info.processComplete));
