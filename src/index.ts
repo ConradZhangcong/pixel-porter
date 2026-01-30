@@ -1,5 +1,5 @@
 import { extname, join, basename } from "node:path";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import inquirer from "inquirer";
 import chalk from "chalk";
 
@@ -41,6 +41,13 @@ async function main() {
     await mkdir(config.outputDir, { recursive: true });
     console.log(chalk.green("输出目录创建成功"));
   }
+
+  // 如果日志目录不存在，则创建日志目录
+  if (!(await fileExists(config.logsDir))) {
+    console.log(chalk.blue("创建日志目录..."));
+    await mkdir(config.logsDir, { recursive: true });
+    console.log(chalk.green("日志目录创建成功"));
+  }
   // 如果输出目录中存在文件, 则提示用户输入判断是否清空
   else {
     const outputFiles = await scanDirectory(config.outputDir);
@@ -71,6 +78,7 @@ async function main() {
 
   let processedCount = 0;
   let skippedCount = 0;
+  const logData: any[] = [];
 
   for (const file of files) {
     try {
@@ -98,24 +106,41 @@ async function main() {
       // 获取并打印EXIF信息
       const exifInfo = await getExifInfo(file);
       let timeSource = "文件创建时间";
+      let exifDateTimeOriginal = null;
 
       // 确定使用的时间：优先使用EXIF中的拍摄时间，否则使用文件创建时间
       let fileName = formatDate(fileInfo.createdAt);
+      let finalTimeUsed = fileInfo.createdAt;
 
       if (exifInfo) {
         console.log(chalk.cyan("EXIF信息:"));
         console.log(exifInfo);
 
+        exifDateTimeOriginal = exifInfo.DateTimeOriginal || null;
+
         // 尝试从EXIF信息中获取拍摄时间
         if (exifInfo.DateTimeOriginal) {
           fileName = exifInfo.DateTimeOriginal;
           timeSource = "EXIF拍摄时间";
+          // 尝试解析EXIF时间字符串为Date对象
+          const exifTime = new Date(exifInfo.DateTimeOriginal);
+          if (!isNaN(exifTime.getTime())) {
+            finalTimeUsed = exifTime;
+          }
         } else if (exifInfo.CreateDate) {
           fileName = exifInfo.CreateDate;
           timeSource = "EXIF创建时间";
+          const exifTime = new Date(exifInfo.CreateDate);
+          if (!isNaN(exifTime.getTime())) {
+            finalTimeUsed = exifTime;
+          }
         } else if (exifInfo.ModifyDate) {
           fileName = exifInfo.ModifyDate;
           timeSource = "EXIF修改时间";
+          const exifTime = new Date(exifInfo.ModifyDate);
+          if (!isNaN(exifTime.getTime())) {
+            finalTimeUsed = exifTime;
+          }
         }
       } else {
         console.log(chalk.yellow("未获取到EXIF信息"));
@@ -130,6 +155,22 @@ async function main() {
       await copyFileTo(file, newFilePath);
       console.log(chalk.green("✓ 处理成功"));
       processedCount++;
+
+      // 收集日志数据
+      logData.push({
+        originalFileName: basename(file),
+        originalPath: fileInfo.filePath,
+        fileSize: fileInfo.size,
+        fileSizeMB: (fileInfo.size / 1024 / 1024).toFixed(2),
+        creationDate: fileInfo.createdAt.toISOString(),
+        creationDateLocal: fileInfo.createdAt.toLocaleString(),
+        exifDateTimeOriginal: exifDateTimeOriginal,
+        timeSource: timeSource,
+        finalTimeUsed: finalTimeUsed.toISOString(),
+        finalTimeUsedLocal: finalTimeUsed.toLocaleString(),
+        newFileName: newFileName,
+        newFilePath: newFilePath
+      });
     } catch (error) {
       console.log(chalk.red(`✗ 处理失败: ${(error as Error).message}`));
       skippedCount++;
@@ -143,6 +184,40 @@ async function main() {
   console.log(chalk.yellow(`跳过处理: ${skippedCount} 个文件`));
   console.log(chalk.cyan(`总计: ${files.length} 个文件`));
   console.log();
+
+  // 生成Markdown格式的日志内容
+  const generateMarkdownLog = (data: any[]): string => {
+    let markdown = `# 文件处理日志\n\n`;
+    markdown += `生成时间: ${new Date().toLocaleString()}\n`;
+    markdown += `成功处理: ${processedCount} 个文件\n`;
+    markdown += `跳过处理: ${skippedCount} 个文件\n`;
+    markdown += `总计: ${files.length} 个文件\n\n`;
+    
+    markdown += `| 原始文件名 | 文件大小 | 创建日期 | EXIF拍摄时间 | 时间来源 | 最终使用时间 | 新文件名 |\n`;
+    markdown += `|----------|---------|---------|-------------|---------|-------------|---------|\n`;
+    
+    data.forEach(item => {
+      markdown += `| ${item.originalFileName} | ${item.fileSizeMB} MB | ${item.creationDateLocal} | ${item.exifDateTimeOriginal || '-'} | ${item.timeSource} | ${item.finalTimeUsedLocal} | ${item.newFileName} |\n`;
+    });
+    
+    return markdown;
+  };
+
+  // 导出日志文件
+  if (logData.length > 0) {
+    console.log(chalk.blue("正在导出日志文件..."));
+    const logFileName = `file_processing_log_${formatDate(new Date())}.md`;
+    const logFilePath = join(config.logsDir, logFileName);
+
+    try {
+      const markdownContent = generateMarkdownLog(logData);
+      await writeFile(logFilePath, markdownContent, 'utf8');
+      console.log(chalk.green(`✓ 日志文件导出成功: ${logFileName}`));
+      console.log(chalk.grey(`日志文件路径: ${logFilePath}`));
+    } catch (error) {
+      console.log(chalk.red(`✗ 日志文件导出失败: ${(error as Error).message}`));
+    }
+  }
 }
 
 // 配置
