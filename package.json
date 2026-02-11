@@ -7,7 +7,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
-    "dev": "node --experimental-strip-types src/index.ts"
+    "dev": "node --experimental-strip-types src/index.ts",
+    "dev:rename": "node --experimental-strip-types src/index.ts rename",
+    "dev:sync-time": "node --experimental-strip-types src/index.ts sync-time"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
