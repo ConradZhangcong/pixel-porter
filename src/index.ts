@@ -4,6 +4,7 @@ import chalk from "chalk";
 import { getConfig } from "./scripts/config.ts";
 import { rename } from "./commands/rename.ts";
 import { syncTime } from "./commands/sync-time.ts";
+import { inspect } from "./commands/inspect.ts";
 
 // 加载配置
 const config = await getConfig();
@@ -15,30 +16,6 @@ function getSubCommand(): string | null {
     if (!arg.startsWith("-")) return arg;
   }
   return null;
-}
-
-// 解析 sync-time 的 CLI 参数
-function parseSyncTimeArgs(): { targetDir: string; recursive: boolean } {
-  const args = process.argv.slice(2);
-  let targetDir = config.outputDir;
-  let recursive = false;
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    // 跳过子命令本身
-    if (arg === "sync-time") continue;
-    if (arg === "--recursive" || arg === "-r") {
-      recursive = true;
-    } else if (arg === "--dir" || arg === "-d") {
-      if (args[i + 1] && !args[i + 1].startsWith("-")) {
-        targetDir = args[++i];
-      }
-    } else if (!arg.startsWith("-")) {
-      targetDir = arg;
-    }
-  }
-
-  return { targetDir, recursive };
 }
 
 // 交互式菜单
@@ -55,7 +32,8 @@ async function showMenu() {
       message: "请选择要执行的功能",
       choices: [
         { name: "📁 文件重命名 — 根据 EXIF/创建时间重命名并复制文件", value: "rename" },
-        { name: "🕐 时间同步   — 将文件修改时间同步为创建时间", value: "sync-time" },
+        { name: "🕐 时间同步   — 将文件创建时间同步为修改时间", value: "sync-time" },
+        { name: "🔍 文件检查   — 检查文件时间信息并生成报告", value: "inspect" },
         new inquirer.Separator(),
         { name: "退出", value: "exit" },
       ],
@@ -72,15 +50,17 @@ async function runCommand(command: string) {
       await rename(config);
       break;
 
-    case "sync-time": {
-      const { targetDir, recursive } = parseSyncTimeArgs();
-      await syncTime(targetDir, recursive);
+    case "sync-time":
+      await syncTime(config);
       break;
-    }
+
+    case "inspect":
+      await inspect(config);
+      break;
 
     default:
       console.log(chalk.red(`  未知命令: ${command}`));
-      console.log(chalk.grey("  可用命令: rename, sync-time"));
+      console.log(chalk.grey("  可用命令: rename, sync-time, inspect"));
       process.exit(1);
   }
 }

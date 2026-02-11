@@ -9,7 +9,8 @@
     "clean": "rm -rf dist",
     "dev": "node --experimental-strip-types src/index.ts",
     "dev:rename": "node --experimental-strip-types src/index.ts rename",
-    "dev:sync-time": "node --experimental-strip-types src/index.ts sync-time"
+    "dev:sync-time": "node --experimental-strip-types src/index.ts sync-time",
+    "dev:inspect": "node --experimental-strip-types src/index.ts inspect"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",

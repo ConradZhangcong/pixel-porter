@@ -10,28 +10,29 @@ import {
   printResult,
   formatElapsed,
 } from "../scripts/progress.ts";
+import type { AppConfig } from "../types/App.ts";
 
-/** 时间同步功能：将目录中所有文件的修改时间同步为创建时间 */
-export async function syncTime(targetDir: string, recursive: boolean): Promise<void> {
+/** 时间同步功能：将目录中所有文件的创建时间同步为修改时间（适用于 macOS） */
+export async function syncTime(config: AppConfig): Promise<void> {
   const startTime = Date.now();
 
   // 启动信息
   console.log();
   console.log(chalk.cyan.bold("  ⬡ Pixel Porter - 时间同步"));
   console.log(chalk.grey(`  ${"─".repeat(40)}`));
-  console.log(chalk.grey(`  目录      ${targetDir}`));
-  console.log(chalk.grey(`  递归扫描  ${recursive ? "是" : "否"}`));
-  console.log(chalk.grey(`  操作      修改时间 → 创建时间`));
+  console.log(chalk.grey(`  目录      ${config.outputDir}`));
+  console.log(chalk.grey(`  递归扫描  ${config.recursive ? "是" : "否"}`));
+  console.log(chalk.grey(`  操作      创建时间 ← 修改时间`));
   console.log();
 
   // 检查目录是否存在
-  if (!(await fileExists(targetDir))) {
-    console.log(chalk.red(`  目标目录不存在: ${targetDir}`));
+  if (!(await fileExists(config.outputDir))) {
+    console.log(chalk.red(`  目标目录不存在: ${config.outputDir}`));
     return;
   }
 
   // 扫描文件
-  const files = await scanDirectory(targetDir, recursive);
+  const files = await scanDirectory(config.outputDir, config.recursive);
 
   if (!files || files.length === 0) {
     console.log(chalk.red("  目录中没有文件"));
@@ -72,11 +73,12 @@ export async function syncTime(targetDir: string, recursive: boolean): Promise<v
         continue;
       }
 
-      // 将修改时间设置为创建时间
-      await utimes(file, fileStat.atime, birthtime);
+      // 将创建时间同步为修改时间
+      // macOS 上，当 utimes 设置的 mtime < 当前 birthtime 时，内核会自动将 birthtime 下调为 mtime
+      await utimes(file, fileStat.atime, mtime);
 
-      const timeStr = birthtime.toLocaleString();
-      printResult(`  ${prefix} ${chalk.green("✓")} ${basename(file)} ${chalk.grey(`mtime → ${timeStr}`)}`);
+      const timeStr = mtime.toLocaleString();
+      printResult(`  ${prefix} ${chalk.green("✓")} ${basename(file)} ${chalk.grey(`btime → ${timeStr}`)}`);
       syncedCount++;
     } catch (error) {
       printResult(`  ${prefix} ${chalk.red("✗")} ${basename(file)} ${chalk.red((error as Error).message)}`);
